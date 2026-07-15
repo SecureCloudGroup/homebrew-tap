@@ -8,8 +8,8 @@
 # step the user would hit the Gatekeeper "unidentified developer" wall — the whole reason we ship via
 # Homebrew instead of a browser download is to avoid exactly that.
 cask "smartbrain" do
-  version "0.4.1"
-  sha256 "42de1e17f2aae80646248bcef418ddca40b1dd046d9f8dd46dfbdb19a4ca7e1a"
+  version "0.4.2"
+  sha256 "3fe38a60fba4b720e79fc8522a1b47de1f67345f74292bcf3db1de83dbdce249"
 
   url "https://github.com/SecureCloudGroup/SmartBrain_3000/releases/download/v#{version}/SmartBrain-macos.zip"
   name "SmartBrain"
@@ -21,6 +21,10 @@ cask "smartbrain" do
   postflight do
     system_command "/usr/bin/xattr",
                    args: ["-dr", "com.apple.quarantine", "#{appdir}/SmartBrain.app"]
+    # Launch it right away: `brew install` should be the LAST step a user types. The launcher takes
+    # it from here — pulls the app image and opens the browser — instead of leaving the user to dig
+    # the next step out of caveat text buried in Homebrew's output.
+    system_command "/usr/bin/open", args: ["-a", "#{appdir}/SmartBrain.app"]
   end
 
   # Docker is required (the app runs the stack in containers). We do NOT force-install Docker Desktop
@@ -31,9 +35,12 @@ cask "smartbrain" do
     easiest; Colima/OrbStack also work) and start it: https://docs.docker.com/get-docker/
     Note: Docker Desktop's own first launch asks you to accept its terms — do that before continuing.
 
-    Then open SmartBrain from your Applications folder. It's a menu-bar app — look for its icon at the
-    top-right of your screen, click it, and choose "Open SmartBrain". The first run downloads the app
-    image (a minute or two), then opens it in your browser at http://localhost:33000.
+    SmartBrain has been LAUNCHED for you — it's a menu-bar app (icon at the top-right of your
+    screen). The first run downloads the app image (a minute or two), then opens it in your browser
+    at http://localhost:33000. To start it again later, open SmartBrain from Applications.
+
+    If macOS asks whether SmartBrain may "access data from other apps", click Allow — that's it
+    locating your Docker installation.
 
     Your data lives in Docker volumes and survives uninstalls; back it up in-app (Settings).
   EOS
