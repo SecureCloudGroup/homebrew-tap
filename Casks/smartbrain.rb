@@ -8,8 +8,8 @@
 # step the user would hit the Gatekeeper "unidentified developer" wall — the whole reason we ship via
 # Homebrew instead of a browser download is to avoid exactly that.
 cask "smartbrain" do
-  version "0.4.0"
-  sha256 "59a37dc877d24088a1132f22c54819fb4914845ff6754f4756225c8cf3e1b395"
+  version "0.4.1"
+  sha256 "42de1e17f2aae80646248bcef418ddca40b1dd046d9f8dd46dfbdb19a4ca7e1a"
 
   url "https://github.com/SecureCloudGroup/SmartBrain_3000/releases/download/v#{version}/SmartBrain-macos.zip"
   name "SmartBrain"
@@ -27,11 +27,19 @@ cask "smartbrain" do
   # as a dependency, because plenty of this audience run Colima / OrbStack / Engine instead — the
   # launcher detects Docker and guides the user if it's missing.
   caveats <<~EOS
-    SmartBrain needs Docker (Desktop, Colima, OrbStack, or Engine). Open SmartBrain from your
-    Applications folder; on first run it downloads the app image and opens it in your browser.
+    SmartBrain runs on Docker. If you don't have it yet, install Docker first (Docker Desktop is the
+    easiest; Colima/OrbStack also work) and start it: https://docs.docker.com/get-docker/
+    Note: Docker Desktop's own first launch asks you to accept its terms — do that before continuing.
+
+    Then open SmartBrain from your Applications folder. It's a menu-bar app — look for its icon at the
+    top-right of your screen, click it, and choose "Open SmartBrain". The first run downloads the app
+    image (a minute or two), then opens it in your browser at http://localhost:33000.
+
+    Your data lives in Docker volumes and survives uninstalls; back it up in-app (Settings).
   EOS
 
-  # "zap" is what `brew uninstall --zap` removes. Your knowledge lives here — a plain uninstall keeps
-  # it; only an explicit zap clears it.
+  # "zap" removes the launcher's config dir. The user's DATA is in Docker volumes (smartbrain_data /
+  # bifrost_data), which Homebrew cannot remove — deliberate: uninstalling an app should not silently
+  # shred a knowledge base. Removing the data is an explicit `docker volume rm` by the user.
   zap trash: "~/Library/Application Support/SmartBrain"
 end
