@@ -8,8 +8,8 @@
 # step the user would hit the Gatekeeper "unidentified developer" wall — the whole reason we ship via
 # Homebrew instead of a browser download is to avoid exactly that.
 cask "smartbrain" do
-  version "0.8.12"
-  sha256 "e3f47a823dec5c01a90c51d8e8e3cb4c0eae750e8bcf0346ce30cac34c742b16"
+  version "0.8.13"
+  sha256 "f38bff5510fd0acde0e563ebb02c33d2a5e3b13f278e2f516eb51e1197a9dc84"
 
   url "https://github.com/SecureCloudGroup/SmartBrain_3000/releases/download/v#{version}/SmartBrain-macos.zip"
   name "SmartBrain"
@@ -27,26 +27,46 @@ cask "smartbrain" do
     system_command "/usr/bin/open", args: ["-a", "#{appdir}/SmartBrain.app"]
   end
 
-  # Docker is required (the app runs the stack in containers). We do NOT force-install Docker Desktop
-  # as a dependency, because plenty of this audience run Colima / OrbStack / Engine instead — the
-  # launcher detects Docker and guides the user if it's missing.
+  # SmartBrain brings its own runtime on Apple Silicon — no Docker, nothing to install first.
+  # Intel Macs have no native build (no pinned Python runtime exists for x86_64 darwin), so the
+  # launcher falls back to Docker there and says so. We still do NOT force-install Docker Desktop:
+  # that audience often runs Colima / OrbStack / Engine instead.
   caveats <<~EOS
-    SmartBrain runs on Docker. If you don't have it yet, install Docker first (Docker Desktop is the
-    easiest; Colima/OrbStack also work) and start it: https://docs.docker.com/get-docker/
-    Note: Docker Desktop's own first launch asks you to accept its terms — do that before continuing.
-
     SmartBrain has been LAUNCHED for you — it's a menu-bar app (icon at the top-right of your
-    screen). The first run downloads the app image (a minute or two), then opens it in your browser
-    at http://localhost:33000. To start it again later, open SmartBrain from Applications.
+    screen). The first run downloads and verifies everything it needs (a few hundred MB, a few
+    minutes), then opens it in your browser at http://localhost:33000. To start it again later,
+    open SmartBrain from Applications.
 
-    If macOS asks whether SmartBrain may "access data from other apps", click Allow — that's it
-    locating your Docker installation.
+    On an Intel Mac, SmartBrain runs in Docker instead. Install Docker first (Docker Desktop is
+    the easiest; Colima and OrbStack also work) and start it: https://docs.docker.com/get-docker/
 
-    Your data lives in Docker volumes and survives uninstalls; back it up in-app (Settings).
+    If macOS asks whether SmartBrain may "access data from other apps", Allow or Deny is fine —
+    it is only looking for Docker, which an Apple Silicon Mac does not need.
+
+    Your data survives uninstalls — including `--zap`, which removes only the app's own files.
+    Back it up any time from Settings → Account & Data.
   EOS
 
-  # "zap" removes the launcher's config dir. The user's DATA is in Docker volumes (smartbrain_data /
-  # bifrost_data), which Homebrew cannot remove — deliberate: uninstalling an app should not silently
-  # shred a knowledge base. Removing the data is an explicit `docker volume rm` by the user.
-  zap trash: "~/Library/Application Support/SmartBrain"
+  # "zap" removes the app's OWN files and nothing else. It used to remove the whole
+  # ~/Library/Application Support/SmartBrain tree, on the stated grounds that "the user's DATA is in
+  # Docker volumes" — true when that line was written, and false the moment the Docker-free stack
+  # landed: the database now lives at data/smartbrain.duckdb inside that very tree. On a live install
+  # that path held a 34 MB knowledge base, so `brew uninstall --zap` would have shredded it.
+  #
+  # Listed leaf by leaf, deliberately, so that adding a new state directory later cannot silently
+  # widen this into user data again:
+  #   data/               the user's encrypted database — NEVER removed by an uninstall
+  #   native/versions/    assembled runtimes (GBs) — safe to drop, re-downloaded on demand
+  #   native/run/         pid files and logs
+  #   native/bifrost-data/ gateway config, which holds PROVISIONED PROVIDER KEYS — removing it on
+  #                       uninstall is the point: leaving credentials behind would be worse
+  #   native/current, native-mode, docker-compose.release.yml — launcher bookkeeping
+  zap trash: [
+    "~/Library/Application Support/SmartBrain/docker-compose.release.yml",
+    "~/Library/Application Support/SmartBrain/native-mode",
+    "~/Library/Application Support/SmartBrain/native/current",
+    "~/Library/Application Support/SmartBrain/native/run",
+    "~/Library/Application Support/SmartBrain/native/versions",
+    "~/Library/Application Support/SmartBrain/native/bifrost-data",
+  ]
 end
