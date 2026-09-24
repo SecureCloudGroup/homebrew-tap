@@ -8,8 +8,8 @@
 # step the user would hit the Gatekeeper "unidentified developer" wall — the whole reason we ship via
 # Homebrew instead of a browser download is to avoid exactly that.
 cask "smartbrain" do
-  version "0.23.0"
-  sha256 "240b1913440186d31d16a18f11db838001183c3688ee320749a85cb8374416b8"
+  version "0.23.1"
+  sha256 "968ded07920ae9cadefc9ba1473ee66f8a2b73f3a1d3492cf9f60d8b5c96d786"
 
   url "https://github.com/SecureCloudGroup/SmartBrain_3000/releases/download/v#{version}/SmartBrain-macos.zip"
   name "SmartBrain"
@@ -61,9 +61,12 @@ cask "smartbrain" do
   #   native/bifrost-data/ gateway config, which holds PROVISIONED PROVIDER KEYS — removing it on
   #                       uninstall is the point: leaving credentials behind would be worse
   #   native/current, native-mode, docker-compose.release.yml — launcher bookkeeping
+  #   local-api.token     the launcher's credential for the app's local API — a credential,
+  #                       so it goes for the same reason bifrost-data does
   zap trash: [
     "~/Library/Application Support/SmartBrain/docker-compose.release.yml",
     "~/Library/Application Support/SmartBrain/native-mode",
+    "~/Library/Application Support/SmartBrain/local-api.token",
     "~/Library/Application Support/SmartBrain/native/current",
     "~/Library/Application Support/SmartBrain/native/run",
     "~/Library/Application Support/SmartBrain/native/versions",
